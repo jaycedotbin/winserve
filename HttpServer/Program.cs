@@ -1,22 +1,18 @@
-﻿Console.Write($"{Environment.NewLine}");
-Console.WriteLine(@"  HTTP Server");
+﻿Console.WriteLine($"{Environment.NewLine}");
+Console.WriteLine("\tHTTP Server");
 
-foreach (var arg in args)
+if (args.Length > 0)
 {
-    if (arg == null)
+    foreach (string? arg in args)
     {
-
+        if (arg == "--help")
+        {
+            Utilities.ShowHelp();
+        }
     }
 
-    if (arg == "--help")
-    {
-        Console.WriteLine(@"  Usage: http-serve <options>");
-
-
-        Console.WriteLine($"{Environment.NewLine}");
-        Console.WriteLine(@"  Options:");
-        Console.WriteLine(@"    --help      - displays the help information for http-serve");
-        Console.WriteLine(@"    --port      - tell http-serve on which port to serve the index.html file");
-
-    }
+}
+else
+{
+    Utilities.GetCurrentDir();
 }
