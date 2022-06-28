@@ -1,19 +1,23 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using Utilities;
 
 internal class Server
 {
-    readonly TcpListener server;
-
-    internal Server(int port = 3000)
+    private TcpListener? listener;
+    internal void Start(int port = 3000)
     {
+
         try
         {
             IPAddress localAddress = IPAddress.Parse("127.0.0.1");
 
-            server = new TcpListener(localAddress, port);
+            listener = new TcpListener(localAddress, port);
 
-            server.Start();
+            listener.Start();
+
+            string currentDir = FileManagement.GetCurrentDir();
+
             byte[] bytes = new byte[256];
             string? data = null;
 
@@ -21,7 +25,7 @@ internal class Server
             {
                 Console.Write("Waiting for a connection...");
 
-                TcpClient client = server.AcceptTcpClient();
+                TcpClient client = listener.AcceptTcpClient();
                 Console.WriteLine("Connected!");
 
                 data = null;
@@ -30,7 +34,7 @@ internal class Server
 
                 int i;
 
-                while ((i = stream.Read(bytes, 0, bytes.Length))!= 0)
+                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                 {
                     data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                     Console.WriteLine("Received: {0}", data);
@@ -46,14 +50,14 @@ internal class Server
                 client.Close();
             }
         }
-        catch(SocketException e)
+        catch (SocketException e)
         {
             Console.WriteLine("SocketeException: {0}", e);
         }
         finally
         {
-            ArgumentNullException.ThrowIfNull(server);
-            server.Stop();
+            ArgumentNullException.ThrowIfNull(listener);
+            listener.Stop();
         }
 
         Console.WriteLine($"{Environment.NewLine}Hit enter to continue");

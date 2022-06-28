@@ -1,19 +1,26 @@
-﻿Console.WriteLine($"{Environment.NewLine}");
-Console.WriteLine("\tHTTP Server");
+﻿using System.CommandLine;
 
-if (args.Length > 0)
+namespace winserve
 {
-    foreach (string? arg in args)
+    class Program
     {
-        if (arg == "--help")
+        static async Task<int> Main(string[] args)
         {
-            Utilities.ShowHelp();
+            var portOption = new Option<int>(
+                name: "--port",
+                description: "displays the help information for http-serve");
+
+            var rootCommand = new RootCommand("winserve - Serve HTML, CSS and JavaScript files only using a single executable");
+            rootCommand.AddOption(portOption);
+
+
+            rootCommand.SetHandler((port) =>
+            {
+                Server server = new();
+                server.Start(port);
+            }, portOption);
+
+            return await rootCommand.InvokeAsync(args);
         }
     }
-
-}
-else
-{
-    Server server = new();
-    Utilities.GetCurrentDir();
 }
