@@ -14,5 +14,6 @@ if (args.Length > 0)
 }
 else
 {
+    Server server = new();
     Utilities.GetCurrentDir();
 }
