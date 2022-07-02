@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "winserve": {
+      "commandName": "Project"
+    }
+  }
+}
