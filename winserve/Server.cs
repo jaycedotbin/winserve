@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using Utilities;
 
 internal class Server
 {
@@ -16,38 +15,16 @@ internal class Server
 
             listener.Start();
 
-            string currentDir = FileManagement.GetCurrentDir();
+            string currentDirectory = Directory.GetCurrentDirectory();
+            var indexHTML = Directory.EnumerateFiles(
+                currentDirectory,
+                "index.html",
+                SearchOption.AllDirectories).FirstOrDefault();
 
-            byte[] bytes = new byte[256];
-            string? data = null;
 
-            while (true)
+            if (File.Exists(indexHTML))
             {
-                Console.Write("Waiting for a connection...");
-
-                TcpClient client = listener.AcceptTcpClient();
-                Console.WriteLine("Connected!");
-
-                data = null;
-
-                NetworkStream stream = client.GetStream();
-
-                int i;
-
-                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                {
-                    data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                    Console.WriteLine("Received: {0}", data);
-
-                    data = data.ToUpper();
-
-                    byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-
-                    stream.Write(msg, 0, msg.Length);
-                    Console.WriteLine("Sent: {0}", data);
-                }
-
-                client.Close();
+                Console.WriteLine("index.html has been found!");
             }
         }
         catch (SocketException e)
