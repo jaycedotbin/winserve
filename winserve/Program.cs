@@ -17,7 +17,8 @@ namespace winserve
             rootCommand.SetHandler((port) =>
             {
                 Server server = new();
-                server.Start(port);
+                string[] prefixes = { $"http://localhost:{port | 3000}/" };
+                server.Start(prefixes);
             }, portOption);
 
             return await rootCommand.InvokeAsync(args);
