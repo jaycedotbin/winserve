@@ -30,7 +30,7 @@ internal class Server
         // Obtain a response object.
         HttpListenerResponse response = context.Response;
         // Construct a response.
-        string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
+        string responseString = GetIndexHTMLFile();
         byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
         // Get a response stream and write the response to it.
         response.ContentLength64 = buffer.Length;
@@ -39,5 +39,27 @@ internal class Server
         // You must close the output stream.
         output.Close();
         httpListener.Stop();
+    }
+
+    internal string GetIndexHTMLFile()
+    {
+        string path = Directory.GetCurrentDirectory();
+
+        try
+        {
+            var htmlFilesInDirectory = Directory.EnumerateFiles(path, "*.html", SearchOption.AllDirectories);
+
+            foreach (string currentFile in htmlFilesInDirectory)
+            {
+                string content = File.ReadAllText(currentFile);
+                return content;
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+
+        return "";
     }
 }
