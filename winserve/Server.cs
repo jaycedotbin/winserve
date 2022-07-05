@@ -125,8 +125,11 @@ internal class Server
 
             foreach (string currentFile in htmlFilesInDirectory)
             {
-                string content = File.ReadAllText(currentFile);
-                return content;
+                if (Path.GetFileName(currentFile) is "index.html")
+                {
+                    string content = File.ReadAllText(currentFile);
+                    return content;
+                }
             }
         }
         catch (Exception e)
