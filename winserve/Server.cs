@@ -86,28 +86,33 @@ internal class Server
             throw new ArgumentException("prefixes");
 
         }
+
         foreach (string s in prefixes)
         {
             httpListener.Prefixes.Add(s);
         }
 
-        httpListener.Start();
-        Console.WriteLine("Listening...");
-        // Note: The GetContext method blocks while waiting for a request.
-        HttpListenerContext context = httpListener.GetContext();
-        HttpListenerRequest request = context.Request;
-        // Obtain a response object.
-        HttpListenerResponse response = context.Response;
-        // Construct a response.
-        string responseString = GetIndexHTMLFile();
-        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-        // Get a response stream and write the response to it.
-        response.ContentLength64 = buffer.Length;
-        Stream output = response.OutputStream;
-        output.Write(buffer, 0, buffer.Length);
-        // You must close the output stream.
-        output.Close();
-        httpListener.Stop();
+
+        while (true)
+        {
+            httpListener.Start();
+            Console.WriteLine("Listening...");
+            // Note: The GetContext method blocks while waiting for a request.
+            HttpListenerContext context = httpListener.GetContext();
+            HttpListenerRequest request = context.Request;
+            // Obtain a response object.
+            HttpListenerResponse response = context.Response;
+            // Construct a response.
+            string responseString = GetIndexHTMLFile();
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+            // Get a response stream and write the response to it.
+            response.ContentLength64 = buffer.Length;
+            Stream output = response.OutputStream;
+            output.Write(buffer, 0, buffer.Length);
+            // You must close the output stream.
+            output.Close();
+            httpListener.Stop();
+        }
     }
 
     internal string GetIndexHTMLFile()
