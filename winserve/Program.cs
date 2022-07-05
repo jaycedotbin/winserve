@@ -4,6 +4,8 @@ namespace winserve
 {
     class Program
     {
+        private const int defaultPort = 3000;
+
         static async Task<int> Main(string[] args)
         {
             var portOption = new Option<int>(
@@ -17,7 +19,7 @@ namespace winserve
             rootCommand.SetHandler((port) =>
             {
                 Server server = new();
-                string[] prefixes = { $"http://localhost:{port | 3000}/" };
+                string[] prefixes = { $"http://localhost:{port | defaultPort}/" };
                 server.Start(prefixes);
             }, portOption);
 
