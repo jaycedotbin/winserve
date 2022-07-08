@@ -4,24 +4,30 @@ namespace winserve
 {
     class Program
     {
-        private const int defaultPort = 3000;
-
         static async Task<int> Main(string[] args)
         {
             var portOption = new Option<int>(
                 name: "--port",
-                description: "displays the help information for http-serve");
+                description: "displays the help information for http-serve",
+                getDefaultValue: () => 3000);
 
-            var rootCommand = new RootCommand("winserve - Serve HTML, CSS and JavaScript files only using a single executable");
-            rootCommand.AddOption(portOption);
+            var pathOption = new Option<string>(
+                name: "--path",
+                description: "",
+                getDefaultValue: () => Directory.GetCurrentDirectory());
 
+            var ipOption = new Option<string>(
+                name: "--ip",
+                description: "",
+                getDefaultValue: () => "localhost");
 
-            rootCommand.SetHandler((port) =>
+            var rootCommand = new RootCommand("winserve - Serve HTML, CSS and JavaScript files only using a single executable") { portOption, ipOption, pathOption };
+
+            rootCommand.SetHandler((port, ip, path) =>
             {
-                Server server = new();
-                string[] prefixes = { $"http://localhost:{port | defaultPort}/" };
-                server.Start(prefixes);
-            }, portOption);
+                Server server = new Server(port, path, ip);
+                server.Start();
+            }, portOption, ipOption, pathOption);
 
             return await rootCommand.InvokeAsync(args);
         }

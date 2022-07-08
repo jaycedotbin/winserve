@@ -1,9 +1,18 @@
 ﻿using System.Net;
 
-internal class Server
+public class Server
 {
+
+    private static readonly string[] indexFiles =
+    {
+        "index.html",
+        "index.htm",
+        "default.html",
+        "default.htm"
+    };
+
     // For loading css, js, etc.
-    private static IDictionary<string, string> mimeTypeMappings =
+    private static IDictionary<string, string> mimeTypes =
         new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase)
         {
             #region extension to MIME type list
@@ -39,6 +48,7 @@ internal class Server
             {   ".mng",     "video/x-mng"                           },
             {   ".mov",     "video/quicktime"                       },
             {   ".mp3",     "audio/mpeg"                            },
+            {   ".mp4",     "video/mpeg"                            },
             {   ".mpeg",    "video/mpeg"                            },
             {   ".mpg",     "video/mpeg"                            },
             {   ".msi",     "application/octet-stream"              },
@@ -71,9 +81,30 @@ internal class Server
             {   ".zip",     "application/zip"                       },
             #endregion
         };
-    internal void Start(string[] prefixes)
+
+    private HttpListener listener;
+    private Thread thread;
+    string path;
+    string ip;
+    private int port;
+
+    public Server(int port, string path, string ip)
     {
-        HttpListener httpListener = new HttpListener();
+        this.path = path;
+        this.ip = ip;
+        this.port = port;
+    }
+
+    internal void Start()
+    {
+        if (thread != null) throw new Exception("winserve is already active. (Call stop first)");
+        thread = new Thread(Listen);
+        thread.Start();
+    }
+
+    internal void Listen()
+    {
+        bool threadActive = true;
 
         if (!HttpListener.IsSupported)
         {
@@ -81,63 +112,97 @@ internal class Server
             return;
         }
 
-        if (prefixes is null || prefixes.Length == 0)
-        {
-            throw new ArgumentException("prefixes");
-
-        }
-
-        foreach (string s in prefixes)
-        {
-            httpListener.Prefixes.Add(s);
-        }
-
-
-        while (true)
-        {
-            httpListener.Start();
-            Console.WriteLine("Listening...");
-            // Note: The GetContext method blocks while waiting for a request.
-            HttpListenerContext context = httpListener.GetContext();
-            HttpListenerRequest request = context.Request;
-            // Obtain a response object.
-            HttpListenerResponse response = context.Response;
-            // Construct a response.
-            string responseString = GetIndexHTMLFile();
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            // Get a response stream and write the response to it.
-            response.ContentLength64 = buffer.Length;
-            Stream output = response.OutputStream;
-            output.Write(buffer, 0, buffer.Length);
-            // You must close the output stream.
-            output.Close();
-            httpListener.Stop();
-        }
-    }
-
-    internal string GetIndexHTMLFile()
-    {
-        string path = Directory.GetCurrentDirectory();
-
         try
         {
-            var htmlFilesInDirectory = Directory.EnumerateFiles(path, "*.html", SearchOption.AllDirectories);
-
-            foreach (string currentFile in htmlFilesInDirectory)
-            {
-                if (Path.GetFileName(currentFile) is "index.html")
-                {
-                    string content = File.ReadAllText(currentFile);
-                    return content;
-                }
-            }
+            listener = new HttpListener();
+            string prefix = string.Format("http://{0}:{1}/", ip, port);
+            listener.Prefixes.Add(prefix);
+            listener.Start();
+            Console.WriteLine("Listening...");
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
+            Console.WriteLine("ERROR:" + e.Message);
+            threadActive = false;
+            return;
         }
 
-        // This shouldn't return an empty string, I should really find a better way to do this
-        return "";
+
+        while (threadActive)
+        {
+
+            try
+            {
+                // Note: The GetContext method blocks while waiting for a request.
+                HttpListenerContext context = listener.GetContext();
+                if (!threadActive) break;
+                ProcessContext(context);
+            }
+            catch (HttpListenerException ex)
+            {
+                Console.Write(ex);
+            }
+        }
+    }
+
+    private void ProcessContext(HttpListenerContext context)
+    {
+        string filename = context.Request.Url.AbsolutePath;
+
+        if (filename != null) filename = filename.Substring(1);
+
+        if (string.IsNullOrEmpty(filename))
+        {
+            foreach (string indexFile in indexFiles)
+            {
+                if (File.Exists(Path.Combine(path, indexFile)))
+                {
+                    filename = indexFile;
+                    break;
+                }
+            }
+        }
+
+        Console.WriteLine($"Serving file: {filename}");
+        filename = Path.Combine(path, filename);
+
+        HttpStatusCode statusCode;
+
+        if (File.Exists(filename))
+        {
+            try
+            {
+                using (Stream stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    context.Response.ContentType = mimeTypes[Path.GetExtension(filename)];
+                    context.Response.ContentLength64 = stream.Length;
+
+                    // copy file stream to response
+                    stream.CopyTo(context.Response.OutputStream);
+                    stream.Flush();
+                    context.Response.OutputStream.Flush();
+                }
+
+                statusCode = HttpStatusCode.OK;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ERROR: " + e.Message);
+                statusCode = HttpStatusCode.InternalServerError;
+            }
+        }
+        else
+        {
+            Console.WriteLine("File not found: " + filename);
+            statusCode = HttpStatusCode.NotFound;
+        }
+
+        context.Response.StatusCode = (int)statusCode;
+        if (statusCode == HttpStatusCode.OK)
+        {
+            context.Response.AddHeader("Date", DateTime.Now.ToString("R"));
+            context.Response.AddHeader("Last-Modified", File.GetLastWriteTime(filename).ToString("R"));
+        }
+        context.Response.OutputStream.Close();
     }
 }
