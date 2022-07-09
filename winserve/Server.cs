@@ -82,8 +82,8 @@ public class Server
             #endregion
         };
 
-    private HttpListener listener;
-    private Thread thread;
+    private HttpListener? listener;
+    private Thread? thread;
     string path;
     string ip;
     private int port;
@@ -136,6 +136,7 @@ public class Server
                 // Note: The GetContext method blocks while waiting for a request.
                 HttpListenerContext context = listener.GetContext();
                 if (!threadActive) break;
+            
                 ProcessContext(context);
             }
             catch (HttpListenerException ex)
@@ -147,9 +148,10 @@ public class Server
 
     private void ProcessContext(HttpListenerContext context)
     {
-        string filename = context.Request.Url.AbsolutePath;
+        string filename = context.Request.Url!.AbsolutePath;
 
-        if (filename != null) filename = filename.Substring(1);
+
+        if (filename is not null) filename = System.Web.HttpUtility.UrlDecode(filename.Substring(1));
 
         if (string.IsNullOrEmpty(filename))
         {
@@ -164,7 +166,7 @@ public class Server
         }
 
         Console.WriteLine($"Serving file: {filename}");
-        filename = Path.Combine(path, filename);
+        filename = Path.Combine(path, filename!);
 
         HttpStatusCode statusCode;
 
