@@ -124,7 +124,6 @@ public class Server
         {
             Console.WriteLine("ERROR:" + e.Message);
             threadActive = false;
-            return;
         }
 
 
