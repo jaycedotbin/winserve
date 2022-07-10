@@ -8,17 +8,17 @@ namespace winserve
         {
             var portOption = new Option<int>(
                 name: "--port",
-                description: "displays the help information for http-serve",
+                description: "Specify a custom port to serve files. (default: Port 3000)",
                 getDefaultValue: () => 3000);
 
             var pathOption = new Option<string>(
                 name: "--path",
-                description: "",
+                description: "Specify a custom path for winserve to serve files. (default: Current Directory)",
                 getDefaultValue: () => Directory.GetCurrentDirectory());
 
             var ipOption = new Option<string>(
                 name: "--ip",
-                description: "",
+                description: "Specify a custom IP Address for winserve to serve files. (default: localhost)",
                 getDefaultValue: () => "localhost");
 
             var rootCommand = new RootCommand("winserve - Serve HTML, CSS and JavaScript files only using a single executable") { portOption, ipOption, pathOption };
